@@ -1,4 +1,4 @@
-from rest_framework import viewsets, permissions, generics, status
+from rest_framework import viewsets, permissions, generics, status, serializers
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.authtoken.models import Token
 from rest_framework.response import Response
@@ -7,6 +7,7 @@ from rest_framework.permissions import IsAuthenticated
 from .models import User, Equipment, Request
 from .serializers import UserSerializer, EquipmentSerializer, RequestSerializer, UserRegistrationSerializer
 from rest_framework.views import APIView
+from django.contrib.auth import update_session_auth_hash
 
 class UserRegistrationView(generics.CreateAPIView):
     queryset = User.objects.all()
@@ -63,6 +64,38 @@ class RequestViewSet(viewsets.ModelViewSet):
             return Response({"detail": "Status field is required."}, status=status.HTTP_400_BAD_REQUEST)
         
         return super().update(request, *args, **kwargs)
+    
+class ChangePasswordSerializer(serializers.Serializer):
+    old_password = serializers.CharField(required=True)
+    new_password = serializers.CharField(required=True)
+
+    def validate(self, attrs):
+        old_password = attrs.get('old_password')
+        new_password = attrs.get('new_password')
+
+        if old_password == new_password:
+            raise serializers.ValidationError("New password must be different from the old password.")
+        return attrs
+
+class ChangePasswordView(generics.UpdateAPIView):
+    serializer_class = ChangePasswordSerializer
+    permission_classes = [IsAuthenticated]
+
+    def update(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = request.user
+        old_password = serializer.validated_data['old_password']
+        new_password = serializer.validated_data['new_password']
+
+        if not user.check_password(old_password):
+            return Response({"old_password": ["Incorrect password."]}, status=status.HTTP_400_BAD_REQUEST)
+
+        user.set_password(new_password)
+        user.save()
+        update_session_auth_hash(request, user)  # Important: updates the session with the new password
+
+        return Response({"detail": "Password updated successfully."}, status=status.HTTP_200_OK)
 
 class CustomAuthToken(ObtainAuthToken):
     def post(self, request, *args, **kwargs):
