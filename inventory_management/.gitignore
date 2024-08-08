@@ -20,3 +20,5 @@ venv.bak/
 
 # Virtual Environment #
 env/
+inventory/tests.py
+inventory/ts.py
