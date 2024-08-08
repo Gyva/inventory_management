@@ -1,10 +1,12 @@
-from rest_framework import viewsets, permissions, generics
+from rest_framework import viewsets, permissions, generics, status
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.authtoken.models import Token
 from rest_framework.response import Response
 from rest_framework.exceptions import PermissionDenied, ValidationError
+from rest_framework.permissions import IsAuthenticated
 from .models import User, Equipment, Request
 from .serializers import UserSerializer, EquipmentSerializer, RequestSerializer, UserRegistrationSerializer
+from rest_framework.views import APIView
 
 class UserRegistrationView(generics.CreateAPIView):
     queryset = User.objects.all()
@@ -51,12 +53,15 @@ class RequestViewSet(viewsets.ModelViewSet):
             raise PermissionDenied("Only active HoDs can update the status.")
         
         if 'status' in request.data:
-            if request.data['status'] not in ['Approved', 'Rejected']:
+            status_value = request.data['status']
+            if status_value not in ['Approved', 'Rejected']:
                 raise ValidationError("Status must be either 'Approved' or 'Rejected'.")
-            instance.status = request.data['status']
+            instance.status = status_value
             instance.approved_by = request.user
             instance.save()
-
+        else:
+            return Response({"detail": "Status field is required."}, status=status.HTTP_400_BAD_REQUEST)
+        
         return super().update(request, *args, **kwargs)
 
 class CustomAuthToken(ObtainAuthToken):
@@ -71,3 +76,13 @@ class CustomAuthToken(ObtainAuthToken):
             'username': user.username,
             'role': user.role
         })
+
+class LogoutView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        try:
+            request.user.auth_token.delete()
+        except (AttributeError, Token.DoesNotExist):
+            return Response({"detail": "No active session found."}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"detail": "Successfully logged out."}, status=status.HTTP_200_OK)
