@@ -93,7 +93,7 @@ class ChangePasswordView(generics.UpdateAPIView):
 
         user.set_password(new_password)
         user.save()
-        update_session_auth_hash(request, user)  # Important: updates the session with the new password
+        update_session_auth_hash(request, user)
 
         return Response({"detail": "Password updated successfully."}, status=status.HTTP_200_OK)
 
