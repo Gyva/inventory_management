@@ -29,6 +29,21 @@ class EquipmentViewSet(viewsets.ModelViewSet):
             raise PermissionDenied("Only active logistic officers can register equipment.")
         serializer.save(added_by=self.request.user)
 
+    def get_queryset(self):
+        if self.request.user.role == 'LogisticOfficer':
+            return Equipment.objects.filter(added_by = self.request.user)
+        return super().get_queryset()
+
+    def perform_update(self, serializer):
+        equipment = self.get_object()
+        if Request.objects.filter(equipment=equipment).exists():
+            raise PermissionDenied("Cannot modify equipment that has been requested.")
+        serializer.save()
+
+    def perform_destroy(self, instance):
+        if Request.objects.filter(equipment=instance).exists():
+            raise PermissionDenied("Cannot delete equipment that has been requested.")
+        instance.delete()
 class RequestViewSet(viewsets.ModelViewSet):
     queryset = Request.objects.all()
     serializer_class = RequestSerializer
