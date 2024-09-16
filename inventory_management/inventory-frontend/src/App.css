@@ -1,0 +1,31 @@
+.content {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: calc(100vh - 100px - 60px); /* Adjust based on header and footer height */
+  margin-left: 250px; /* Adjust based on sidebar width */
+  padding: 20px;
+  width: 100%;
+}
+
+.header, .footer {
+  text-align: center;
+  width: 100%;
+}
+
+.sidebar {
+  position: fixed;
+  left: 0;
+  top: 56px; /* Adjust based on header height */
+  bottom: 0;
+  width: 250px;
+  background-color: #333; /* Adjust as necessary */
+  color: white; /* Adjust as necessary */
+}
+
+.footer {
+  position: fixed;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+}

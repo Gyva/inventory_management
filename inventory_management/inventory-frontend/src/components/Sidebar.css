@@ -1,0 +1,16 @@
+.bg-sidebar {
+  background-color: #f8f9fa; /* Adjust as necessary */
+  position: fixed;
+  top: 56px; /* Adjust based on header height */
+  bottom: 0;
+  width: 250px;
+  overflow-y: auto;
+}
+
+.list-group-item {
+  cursor: pointer;
+}
+
+.list-group-item:hover {
+  background-color: #e9ecef; /* Adjust hover color as necessary */
+}
